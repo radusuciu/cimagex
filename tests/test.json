@@ -1,0 +1,55 @@
+{
+    "test_rsquared": {
+        "data": [
+            ["Q9Z1Q2", "Abhd16a", "This should fail rsquared", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 0.0, 7548, 0.0],
+            ["Q9Z1Q2", "Abhd16a", "This should fail rsquared", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 0.0, 7548, 0.7],
+            ["Q9Z1Q2", "Abhd16a", "This should fail rsquared", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 0.0, 7548, 0.0],
+            ["Q9Z1Q2", "Abhd16a", "This should fail rsquared", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 0.0, 7548, 0.0]
+        ],
+        "headers": ["uniprot", "symbol", "description", "sequence", "mass", "charge", "segment", "ratio", "entry", "rsquared"]
+    },
+    "test_stats": {
+        "data": [
+            ["Q9Z1Q2", "Abhd16a", "Hello, Armand.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 5, 7548, 0.0],
+            ["Q9Z1Q2", "Abhd16a", "Hello, Armand.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 2, 7548, 0.7],
+            ["Q9Z1Q2", "Abhd16a", "Hello, Armand.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 2, 7548, 0.0],
+            ["Q9Z1Q2", "Abhd16a", "Hello, Armand.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 0.0, 7548, 0.0]
+        ],
+        "headers": ["uniprot", "symbol", "description", "sequence", "mass", "charge", "segment", "ratio", "entry", "rsquared"]
+    },
+    "test_unique": {
+        "data": [
+            ["Q9Z1Q2", "Abhd16a", "The ratios must flow.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 5, 7548, 0.0],
+            ["Q9Z1Q2", "Abhd16a", "The ratios must flow.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 2, 7548, 0.7],
+            ["Q9Z1Q2", "Abhd16a", "The ratios must flow.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 2, 7548, 0.0],
+            ["Q9Z1Q2", "Abhd16a", "The ratios must flow.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 0.0, 7548, 0.0],
+            ["UNIPROT", "Abhd11ty", "Kenneth is an Albatross.", "R.SWPVRAEKWEEPSSR.K", 2267.1627, 2, 3, 5, 7548, 0.0],
+            ["UNIPROT", "Abhd11ty", "Kenneth is an Albatross.", "R.UNIQUEFUARK.K", 2267.1627, 2, 3, 2, 7548, 0.7],
+            ["UNIPROT", "Abhd11ty", "Kenneth is an Albatross.", "R.SWPVRAEKWEEPSSR.K", 2267.1627, 2, 3, 2, 7548, 0.0],
+            ["UNIPROT", "Abhd11ty", "Kenneth is an Albatross.", "R.SWPVRAEKWEEPSSR.K", 2267.1627, 2, 3, 0.0, 7548, 0.0]
+        ],
+        "headers": ["uniprot", "symbol", "description", "sequence", "mass", "charge", "segment", "ratio", "entry", "rsquared"]
+    },
+    "test_whitelist": {
+        "data": [
+            ["Albatross", "Abhd16a", "Hello, Armand.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 5, 7548, 0.0],
+            ["Strugglebird", "Abhd16a", "Hello, Armand.", "R.SWPVDFHWEEPSSR.K", 2267.1627, 2, 3, 2, 7548, 0.7]
+        ],
+        "headers": ["uniprot", "symbol", "description", "sequence", "mass", "charge", "segment", "ratio", "entry", "rsquared"]
+    },
+    "test_addition_1": {
+        "data": [
+            ["Albatross", "Abhd16a", "Hello, Armand.", "R.FIRSTPEPTIDE.K", 2267.1627, 2, 3, 1, 7548, 0.0],
+            ["Strugglebird", "Abhd16a", "Hello, Armand.", "R.FIRSTPEPTIDE.K", 2267.1627, 2, 3, 2, 7548, 0.7]
+        ],
+        "headers": ["uniprot", "symbol", "description", "sequence", "mass", "charge", "segment", "ratio", "entry", "rsquared"]
+    },
+    "test_addition_2": {
+        "data": [
+            ["Albatross", "Abhd16a", "Hello, Armand.", "R.SECONDPEPTIDE.K", 2267.1627, 2, 3, 10, 7548, 0.0],
+            ["Strugglebird", "Abhd16a", "Hello, Armand.", "R.SECONDPEPTIDE.K", 2267.1627, 2, 3, 2, 7548, 0.7],
+            ["Chicken", "Abhd16a", "Hello, Armand.", "R.OTHERPEPTIDE.K", 2267.1627, 2, 3, 2, 7548, 0.7]
+        ],
+        "headers": ["uniprot", "symbol", "description", "sequence", "mass", "charge", "segment", "ratio", "entry", "rsquared"]
+    }
+}

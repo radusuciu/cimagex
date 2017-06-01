@@ -1,0 +1,1 @@
+A few classes which make working with cimage a bit easier.
