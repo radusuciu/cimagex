@@ -30,13 +30,13 @@ class Protein():
         """Set mean, median and stdev."""
         raw_ratios = [p.ratio for p in self.peptides]
 
-        if inverse:
-            raw_ratios = [1/x for x in raw_ratios]
-
         if ratio_filter:
             ratios = ratio_filter(raw_ratios)
         else:
             ratios = [r for r in raw_ratios if r > 0]
+
+        if inverse:
+            ratios = [1/x for x in ratios if x > 0]
 
         self.mean = self.special_mean(ratios)
         self.median = self.special_median(ratios)
