@@ -7,8 +7,6 @@ I can't afford to spend the time so.. :/
 from copy import deepcopy
 from .peptide import Peptide as MudpitPeptide
 from .protein import Protein as MudpitProtein
-import statistics
-import math
 import csv
 
 

@@ -1,5 +1,6 @@
 from operator import itemgetter
 from .dataset import Dataset
+from .peptide_dataset import PeptideDataset
 from .peptide import Peptide
 from .protein import Protein
 from .parse_combined import ParseCombined
