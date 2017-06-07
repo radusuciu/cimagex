@@ -159,7 +159,7 @@ class PeptideDataset():
 
             if not headers:
                 headers = [
-                    'uniprot', 'symbol', 'mean',
+                    'sequence', 'mean',
                     'median', 'stdev', 'n', 'stderr'
                 ]
 
