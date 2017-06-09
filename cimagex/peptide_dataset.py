@@ -50,6 +50,7 @@ class PeptideContainer(MudpitProtein):
         """Init peptide."""
         self._id = '{}_{}'.format(uniprot, sequence)
         self.uniprot = uniprot
+        self.description = description
         self.sequence = sequence
         self.peptides = peptides
         self.mean = mean
