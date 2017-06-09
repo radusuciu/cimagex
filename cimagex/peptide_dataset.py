@@ -109,7 +109,7 @@ class PeptideDataset():
         if not type(sequence) == PeptideContainer:
             return
 
-        current = self.get(sequence._id, sequence.uniprot)
+        current = self.get(sequence.sequence, sequence.uniprot)
 
         # if we already have a protein in the dataset with the same uniprot, then just add them together
         # otherwise add it to the list
