@@ -25,6 +25,11 @@ class Peptide(MudpitPeptide):
         self.ratio = ratio
         self.rsquared = rsquared
 
+    @property
+    def clean_sequence(self):
+        """Get totally clean peptide sequence."""
+        return self.sequence.split('.')[1].translate(Peptide.delchars)
+
     def __repr__(self):
         return 'Peptide(sequence={}, uniprot={}, description={}, mass={}, charge={}, segment={}, ratio={}, rsquared={})'.format(
             self.sequence,
@@ -41,17 +46,36 @@ class Peptide(MudpitPeptide):
 class PeptideContainer(MudpitProtein):
     """A grouping of other peptides."""
 
-    def __init__(self, sequence, peptides=[], mean=None, median=None, stdev=None):
+    def __init__(self, sequence, uniprot, description, peptides=[], mean=None, median=None, stdev=None):
         """Init peptide."""
+        self._id = '{}_{}'.format(uniprot, sequence)
         self.sequence = sequence
         self.peptides = peptides
         self.mean = mean
         self.median = median
         self.stdev = stdev
 
+    @property
+    def clean_sequence(self):
+        """Get totally clean peptide sequence."""
+        return self.sequence.translate(Peptide.delchars)
+
     def get_num_unique_peptides(self):
         """Get number unique peptides by sequence."""
         return len(set([x.clean_sequence for x in self.peptides]))
+
+    def remove_half_tryptic_peptides(self):
+        """Removes half tryptic peptides from container."""
+
+
+    def strip_diff_mods(self):
+        """Remove all diff mods from container and child peptides."""
+        self.sequence = self.clean_sequence
+
+        for peptide in self.peptides:
+            peptide.sequence = peptide.clean_sequence
+
+        return self
 
     def __add__(self, peptide):
         """Add one peptide to another by concatenating peptides with the condition that they have the same sequence."""
@@ -85,7 +109,7 @@ class PeptideDataset():
         if not type(sequence) == PeptideContainer:
             return
 
-        current = self.get(sequence.sequence)
+        current = self.get(sequence._id)
 
         # if we already have a protein in the dataset with the same uniprot, then just add them together
         # otherwise add it to the list
@@ -94,17 +118,28 @@ class PeptideDataset():
         else:
             self.sequences.append(sequence)
 
-    def get(self, sequence):
-        """Get from the dataset by sequence."""
+    def get(self, sequence, uniprot):
+        """Get from the dataset by sequence, uniprot pair."""
         for item in self.sequences:
-            if item.sequence == sequence:
+            if item.sequence == sequence and item.uniprot == uniprot:
                 return item
-
         return None
+
+    def get_by_id(self, sequence_id):
+        """Get from the dataset by id"""
+        for item in self.sequences:
+            if item._id == sequence_id:
+                return item
+        return None
+
+    def get_by_sequence(self, sequence):
+        """Get all items that match a sequence."""
+        matches = [s for s in self.sequences if s.sequence == sequence]
+        return matches
 
     def dedupe(self):
         """Ensure that we have only unique protein entries."""
-        unique_sequences = self.get_unique_sequences()
+        unique_sequences = self.get_unique_ids()
         # if all of our proteins are unique then don't do any work
         if len(unique_sequences) == len(self.sequences):
             return
@@ -113,20 +148,29 @@ class PeptideDataset():
             # otherwise I need to write some code here. Throwing exception to be safe.
             raise NotImplementedError
 
-    def index_by_sequence(self):
+    def get_index(self):
         """Return a dict of all the proteins in dataset with the uniprot id as key."""
-        return {p.sequence: p for p in self.sequences}
+        return {p._id: p for p in self.sequences}
+
+    def get_unique_ids(self):
+        """Get set of unique items contained in dataset."""
+        unique = set()
+        for s in self.sequences:
+            unique.add(s._id)
+
+        return unique
 
     def get_unique_sequences(self):
-        """Get set of unique uniprots contained in dataset."""
+        """Get set of unique sequences contained in dataset."""
         unique = set()
         for protein in self.sequences:
             unique.add(protein.sequence)
+
         return unique
 
     def filter(self, filter_callback):
         """Given any callback, filter the list of proteins contained in a dataset."""
-        self.sequences = filter(filter_callback, self.sequences)
+        self.sequences = list(filter(filter_callback, self.sequences))
 
     def apply_rsquared_cutoff(self, cutoff):
         """Filter dataset by ratio cutoff."""
@@ -147,6 +191,39 @@ class PeptideDataset():
         """Only keep sequences that are in the passed whitelist."""
         self.sequences = [p for p in self.sequences if p.sequence in whitelist]
 
+    def apply_blacklist_filter(self, blacklist):
+        """Throw away sequences that are in blacklist."""
+        self.sequences = [s for s in self.sequences if s.sequence not in blacklist]
+
+    def remove(self, el):
+        """Remove a single element by sequence or by passing the whole PeptideContainer."""
+        if type(el) == PeptideContainer:
+            self.sequences.remove(el)
+        elif type(el) == str:
+            self.apply_blacklist_filter(el)
+
+    def remove_oxidized_only(self, oxidized_symbol='+'):
+        """Removes sequences that have no non-oxidized variants."""
+        oxidized_sequences = [s for s in self.sequences if oxidized_symbol in s.sequence]
+
+        for s in oxidized_sequences:
+            non_oxidized_variants = self.get(s.clean_sequence, s.uniprot)
+            if not non_oxidized_variants:
+                self.remove(s)
+
+    def remove_double_labeled(self, label_symbol='*'):
+        """Removes peptides that are doubly labeled."""
+        self.filter(lambda s: s.sequence.count(label_symbol) <= 1)
+
+    def merge_to_clean_sequences(self):
+        """Merge peptides with the same base sequence, irrespective of diff mods."""
+        for sequence in self.sequences:
+            clean_variant = self.get(sequence.clean_sequence, sequence.uniprot)
+            if clean_variant:
+                sequence.strip_diff_mods()
+                clean_variant += deepcopy(sequence)
+                self.remove(sequence)
+
     def generate_stats(self, ratio_filter=None):
         """Generate stats for each protein in dataset."""
         for sequence in self.sequences:
@@ -159,7 +236,7 @@ class PeptideDataset():
 
             if not headers:
                 headers = [
-                    'sequence', 'mean',
+                    'uniprot', 'description', 'sequence', 'mean',
                     'median', 'stdev', 'n', 'stderr'
                 ]
 
@@ -167,6 +244,8 @@ class PeptideDataset():
 
             for sequence in self.sequences:
                 writer.writerow([
+                    sequence.uniprot,
+                    sequence.description,
                     sequence.sequence,
                     sequence.mean,
                     sequence.median,
