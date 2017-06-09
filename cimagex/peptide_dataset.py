@@ -49,6 +49,7 @@ class PeptideContainer(MudpitProtein):
     def __init__(self, sequence, uniprot, description, peptides=[], mean=None, median=None, stdev=None):
         """Init peptide."""
         self._id = '{}_{}'.format(uniprot, sequence)
+        self.uniprot = uniprot
         self.sequence = sequence
         self.peptides = peptides
         self.mean = mean
