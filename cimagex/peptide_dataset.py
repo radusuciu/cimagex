@@ -57,6 +57,8 @@ class PeptideContainer(MudpitProtein):
         self.median = median
         self.stdev = stdev
 
+        self._clean_id = '{}_{}'.format(uniprot, self.clean_sequence)
+
     @property
     def clean_sequence(self):
         """Get totally clean peptide sequence."""
@@ -68,11 +70,21 @@ class PeptideContainer(MudpitProtein):
 
     def remove_half_tryptic_peptides(self):
         """Removes half tryptic peptides from container."""
+        for p in self.peptides:
+            if p.sequence[0] not in ['K','R','-']: # nterminus
+                self.peptides.remove(p)
+            if  p.sequence[-3] not in ['K','R'] and p.sequence[-1] != '-': # cterminus    
+                self.peptides.remove(p)
 
+    def make_clean(self):
+        """Set sequence and id to clean variants."""
+        self._id = self._clean_id
+        self.sequence = self.clean_sequence
+        return self
 
     def strip_diff_mods(self):
         """Remove all diff mods from container and child peptides."""
-        self.sequence = self.clean_sequence
+        self.make_clean()
 
         for peptide in self.peptides:
             peptide.sequence = peptide.clean_sequence
@@ -162,12 +174,26 @@ class PeptideDataset():
 
         return unique
 
+    def get_unique_clean_ids(self):
+        """Get set of unique items contained in dataset if we ignore diff mods."""
+        unique = set()
+        for s in self.sequences:
+            unique.add(s._clean_id)
+        return unique
+
     def get_unique_sequences(self):
         """Get set of unique sequences contained in dataset."""
         unique = set()
         for protein in self.sequences:
             unique.add(protein.sequence)
 
+        return unique
+
+    def get_unique_clean_sequences(self):
+        """Get set of unique clean sequences contained in dataset."""
+        unique = set()
+        for sequence in self.sequences:
+            unique.add(sequence.clean_sequence)
         return unique
 
     def filter(self, filter_callback):
@@ -217,14 +243,26 @@ class PeptideDataset():
         """Removes peptides that are doubly labeled."""
         self.filter(lambda s: s.sequence.count(label_symbol) <= 1)
 
+    def remove_half_tryptic(self):
+        """Removes half tryptic peptides."""
+        for s in self.sequences:
+            s.remove_half_tryptic()
+
+    def remove_empty(self):
+        """Removes empty peptide containers."""
+        for s in self.sequences:
+            if not s.peptides:
+                self.remove(s)
+
     def merge_to_clean_sequences(self):
         """Merge peptides with the same base sequence, irrespective of diff mods."""
-        for sequence in self.sequences:
-            clean_variant = self.get(sequence.clean_sequence, sequence.uniprot)
-            if clean_variant:
-                sequence.strip_diff_mods()
-                clean_variant += deepcopy(sequence)
-                self.remove(sequence)
+        for _id in self.get_unique_clean_ids():
+            sequences_matching = [s.make_clean() for s in self.sequences if s._clean_id == _id]
+            # merge into first match if we have multiple matches
+            if len(sequences_matching) > 1:
+                sequences_matching[0] = sum(sequences_matching[1:], sequences_matching[0])
+                for s in sequences_matching[1:]:
+                    self.remove(s)
 
     def generate_stats(self, ratio_filter=None):
         """Generate stats for each protein in dataset."""
