@@ -122,3 +122,38 @@ class Dataset():
 
     def __repr__(self):
         return 'Dataset(proteins={})'.format(self.proteins)
+
+
+def make_dataset(combined_dta_path):
+    parser = Parse_Combined()
+    raw = parser.parse_file(str(combined_dta_path))
+    dataset = Dataset()
+    proteins = []
+    for protein in raw:
+        peptides = [make_peptide(peptide) for peptide in protein['peptides']]
+        proteins.append(make_protein(protein, peptides))
+    dataset.proteins = proteins
+    return dataset
+
+
+def make_peptide(raw_peptide):
+    """Given a list of attributes and appropriate headers, make a Peptide."""
+    return Peptide(
+        sequence=raw_peptide['sequence'],
+        mass=float(raw_peptide['mass']),
+        charge=int(raw_peptide['charge']),
+        segment=int(raw_peptide['segment']),
+        ratio=float(raw_peptide['mr']),
+        rsquared=0
+    )
+
+
+def make_protein(raw_protein, peptides):
+    """Given a list of attributes and appropriate headers, make a Protein."""
+    return Protein(
+        uniprot=raw_protein['uniprot_id'],
+        symbol=raw_protein['symbol'],
+        description=raw_protein['description'],
+        peptides=peptides,
+        mean=raw_protein['mean_ratio'], median=None, stdev=None
+    )

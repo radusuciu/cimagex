@@ -307,3 +307,44 @@ class PeptideDataset():
 
     def __repr__(self):
         return 'PeptideDataset(sequences={})'.format(self.sequences)
+
+
+def make_dataset(combined_dta_path):
+    parser = ParseCombined()
+    raw = parser.parse_file(str(combined_dta_path), type='peptide')
+    sequences = []
+
+    for item in raw:
+        peptides = [make_peptide(peptide) for peptide in item['peptides']]
+
+        # grouping by uniprot in case there are sequences that are assigned to multiple
+        # uniprot ids. for assembling our dataset, it would be preferrable to treat these as
+        # separate entities even if they are kept together by cimage
+        grouped = itertools.groupby(peptides, operator.attrgetter('uniprot'))
+
+        for uniprot, group in grouped:
+            sequences.append(make_sequence(uniprot, item, list(group)))
+
+    return PeptideDataset(sequences=sequences)
+
+
+def make_peptide(raw_peptide):
+    return Peptide(
+        sequence=raw_peptide['sequence'],
+        uniprot=raw_peptide['uniprot_id'],
+        description=raw_peptide['description'],
+        mass=float(raw_peptide['mass']),
+        charge=int(raw_peptide['charge']),
+        segment=int(raw_peptide['segment']),
+        ratio=float(raw_peptide['mr']),
+        rsquared=0
+    )
+
+def make_sequence(uniprot, item, peptides):
+    return PeptideContainer(
+        sequence=item['sequence'],
+        uniprot=uniprot,
+        description=peptides[0].description,
+        peptides=peptides,
+        mean=item['mean_ratio'], median=None, stdev=None
+    )
