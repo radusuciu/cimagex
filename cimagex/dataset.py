@@ -1,7 +1,7 @@
 """Defines a Dataset, which is a collection of Proteins."""
-
 from copy import deepcopy
 from .protein import Protein
+from .parse_combined import ParseCombined
 import csv
 
 
@@ -125,7 +125,7 @@ class Dataset():
 
 
 def make_dataset(combined_dta_path):
-    parser = Parse_Combined()
+    parser = ParseCombined()
     raw = parser.parse_file(str(combined_dta_path))
     dataset = Dataset()
     proteins = []

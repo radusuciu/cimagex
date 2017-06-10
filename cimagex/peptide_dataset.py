@@ -7,8 +7,10 @@ I can't afford to spend the time so.. :/
 from copy import deepcopy
 from .peptide import Peptide as MudpitPeptide
 from .protein import Protein as MudpitProtein
+from .parse_combined import ParseCombined
 import csv
-
+import itertools
+import operator
 
 
 class Peptide(MudpitPeptide):
@@ -339,6 +341,7 @@ def make_peptide(raw_peptide):
         ratio=float(raw_peptide['mr']),
         rsquared=0
     )
+
 
 def make_sequence(uniprot, item, peptides):
     return PeptideContainer(
