@@ -153,6 +153,17 @@ class PeptideDataset():
         matches = [s for s in self.sequences if s.sequence == sequence]
         return matches
 
+    def standard_processing(self):
+        """Convenience method for running common processing steps."""
+        self.remove_reverse_matches()
+        self.remove_half_tryptic()
+        self.remove_double_labeled()
+        self.remove_oxidized_only()
+        self.remove_empty()
+        self.merge_to_clean_sequences()
+        self.remove_empty()
+        self.generate_stats()
+
     def dedupe(self):
         """Ensure that we have only unique protein entries."""
         unique_sequences = self.get_unique_ids()
@@ -279,7 +290,7 @@ class PeptideDataset():
 
     def to_csv(self, filename, headers=None):
         """Output dataset to .csv file."""
-        with open(filename, 'w') as f:
+        with open(str(filename), 'w') as f:
             writer = csv.writer(f, lineterminator='\n')
 
             if not headers:
