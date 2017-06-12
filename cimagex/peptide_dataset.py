@@ -250,6 +250,12 @@ class PeptideDataset():
         for s in self.sequences:
             s.remove_half_tryptic()
 
+    def remove_reverse_matches(self):
+        """Removes sequences Reverse Uniprot sequences found by IP2."""
+        for s in self.sequences:
+            if 'Reverse' in s.uniprot:
+                self.remove(s)
+
     def remove_empty(self):
         """Removes empty peptide containers."""
         for s in self.sequences:
