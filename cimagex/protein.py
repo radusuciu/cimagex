@@ -72,7 +72,7 @@ class Protein():
     def special_stderr(ratios):
         """Return the standard error of a set of ratios."""
         try:
-            statistics.stdev(ratios) / math.sqrt(len(ratios))
+            return statistics.stdev(ratios) / math.sqrt(len(ratios))
         except:
             return '-'
 
