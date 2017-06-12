@@ -70,7 +70,7 @@ class PeptideContainer(MudpitProtein):
         """Get number unique peptides by sequence."""
         return len(set([x.clean_sequence for x in self.peptides]))
 
-    def remove_half_tryptic_peptides(self):
+    def remove_half_tryptic(self):
         """Removes half tryptic peptides from container."""
         for p in self.peptides:
             if p.sequence[0] not in ['K','R','-']: # nterminus
