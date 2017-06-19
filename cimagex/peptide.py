@@ -6,7 +6,7 @@ class Peptide():
 
     delchars = {ord(c): None for c in map(chr, range(256)) if not c.isalpha()}
 
-    def __init__(self, sequence, mass, charge, segment, ratio, rsquared):
+    def __init__(self, sequence, mass, charge, segment, ratio, rsquared, num_ms2=None):
         """Init peptide."""
         self.sequence = sequence
         self.mass = mass
@@ -15,17 +15,21 @@ class Peptide():
         self.ratio = ratio
         self.rsquared = rsquared
 
+        if num_ms2:
+            self.num_ms2 = num_ms2
+
     @property
     def clean_sequence(self):
         """Get totally clean peptide sequence."""
         return self.sequence.split('.')[1].translate(Peptide.delchars)
 
     def __repr__(self):
-        return 'Peptide(sequence={}, mass={}, charge={}, segment={}, ratio={}, rsquared={})'.format(
+        return 'Peptide(sequence={}, mass={}, charge={}, segment={}, ratio={}, rsquared={}, num_ms2={})'.format(
             self.sequence,
             self.mass,
             self.charge,
             self.segment,
             self.ratio,
-            self.rsquared
+            self.rsquared,
+            self.num_ms2
         )

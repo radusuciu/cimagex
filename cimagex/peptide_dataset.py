@@ -5,6 +5,7 @@ I can't afford to spend the time so.. :/
 """
 
 from copy import deepcopy
+from collections import defaultdict
 from .peptide import Peptide as MudpitPeptide
 from .protein import Protein as MudpitProtein
 from .parse_combined import ParseCombined
@@ -16,7 +17,7 @@ import operator
 class Peptide(MudpitPeptide):
     """An individual peptide."""
 
-    def __init__(self, sequence, uniprot, description, mass, charge, segment, ratio, rsquared):
+    def __init__(self, sequence, uniprot, description, mass, charge, segment, ratio, rsquared, num_ms2=None):
         """Init peptide."""
         self.sequence = sequence
         self.uniprot = uniprot
@@ -27,13 +28,16 @@ class Peptide(MudpitPeptide):
         self.ratio = ratio
         self.rsquared = rsquared
 
+        if num_ms2:
+            self.num_ms2 = num_ms2
+
     @property
     def clean_sequence(self):
         """Get totally clean peptide sequence."""
         return self.sequence.split('.')[1].translate(Peptide.delchars)
 
     def __repr__(self):
-        return 'Peptide(sequence={}, uniprot={}, description={}, mass={}, charge={}, segment={}, ratio={}, rsquared={})'.format(
+        return 'Peptide(sequence={}, uniprot={}, description={}, mass={}, charge={}, segment={}, ratio={}, rsquared={}, num_ms2={})'.format(
             self.sequence,
             self.uniprot,
             self.description,
@@ -41,7 +45,8 @@ class Peptide(MudpitPeptide):
             self.charge,
             self.segment,
             self.ratio,
-            self.rsquared
+            self.rsquared,
+            self.num_ms2
         )
 
 
@@ -76,6 +81,12 @@ class PeptideContainer(MudpitProtein):
             if p.sequence[0] not in ['K','R','-']: # nterminus
                 self.peptides.remove(p)
             if  p.sequence[-3] not in ['K','R'] and p.sequence[-1] != '-': # cterminus    
+                self.peptides.remove(p)
+
+    def filter_by_ms2(self, threshold=2):
+        """Filter out peptides that don't have a certain number of ms2s."""
+        for p in self.peptides:
+            if p.num_ms2 < threshold:
                 self.peptides.remove(p)
 
     def make_clean(self):
@@ -116,9 +127,10 @@ class PeptideContainer(MudpitProtein):
 class PeptideDataset():
     """Holds a list of peptides and defines methods for their manipulation."""
 
-    def __init__(self, sequences=[]):
+    def __init__(self, sequences=[], url=None):
         """Initialize with a list of sequences (peptide containers)."""
         self.sequences = sequences
+        self.url = url
 
     def add(self, sequence):
         """Add a protein to the list."""
@@ -224,6 +236,15 @@ class PeptideDataset():
 
         self.sequences = filtered
 
+    def apply_ms2_filter(self, cutoff=1):
+        """Filter dataset to only keep peptides that have at least a certain number of ms2s."""
+        for s in self.sequences:
+            # apply to peptides that only have one sequence
+            if len(s.peptides) == 1:
+                s.filter_by_ms2()
+
+        return self
+
     def apply_unique_filter(self, cutoff):
         """Only keep sequences that have a minimum number of unique peptides."""
         self.sequences = [p for p in self.sequences if p.get_num_unique_peptides() >= cutoff]
@@ -328,13 +349,24 @@ class PeptideDataset():
         return 'PeptideDataset(sequences={})'.format(self.sequences)
 
 
-def make_dataset(combined_dta_path):
+def make_dataset(combined_dta_path, dtaselect_path=None):
     parser = ParseCombined()
     raw = parser.parse_file(str(combined_dta_path), type='peptide')
     sequences = []
 
+    if dtaselect_path:
+        ms2_counts = parse_dtaselect(dtaselect_path)
+
     for item in raw:
-        peptides = [make_peptide(peptide) for peptide in item['peptides']]
+        peptides = []
+
+        for raw_peptide in item['peptides']:
+            peptide = make_peptide(raw_peptide)
+
+            if dtaselect_path:
+                peptide.num_ms2 = ms2_counts.get(peptide.sequence)
+
+            peptides.append(peptide)
 
         # grouping by uniprot in case there are sequences that are assigned to multiple
         # uniprot ids. for assembling our dataset, it would be preferrable to treat these as
@@ -368,3 +400,18 @@ def make_sequence(uniprot, item, peptides):
         peptides=peptides,
         mean=item['mean_ratio'], median=None, stdev=None
     )
+
+
+def parse_dtaselect(dtaselect_path):
+    with open(str(dtaselect_path)) as f:
+        raw = f.readlines()
+
+    data = raw[29:]
+    counts = defaultdict(int)
+
+    for row in data:
+        if row[0] in ('*', '\t'):
+            sequence = row.strip().split('\t')[-1]
+            counts[sequence] = counts[sequence] + 1
+
+    return counts
