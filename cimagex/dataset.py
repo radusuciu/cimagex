@@ -8,10 +8,11 @@ import csv
 class Dataset():
     """Holds a list of proteins and defines methods for their manipulation."""
 
-    def __init__(self, proteins=[], species=None):
+    def __init__(self, proteins=[], species=None, name=None):
         """Initialize with a list of proteins."""
         self.proteins = proteins
         self.species = species
+        self.name = name
 
     def add(self, protein):
         """Add a protein to the list."""
