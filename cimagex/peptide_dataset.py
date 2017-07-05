@@ -262,7 +262,7 @@ class PeptideDataset():
         if type(el) == PeptideContainer:
             self.sequences.remove(el)
         elif type(el) == str:
-            self.apply_blacklist_filter(el)
+            self.apply_blacklist_filter([el])
 
     def remove_oxidized_only(self, oxidized_symbol='+'):
         """Removes sequences that have no non-oxidized variants."""
