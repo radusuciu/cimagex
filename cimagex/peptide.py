@@ -6,7 +6,7 @@ class Peptide():
 
     delchars = {ord(c): None for c in map(chr, range(256)) if not c.isalpha()}
 
-    def __init__(self, sequence, mass, charge, segment, ratio, rsquared, num_ms2=None):
+    def __init__(self, sequence, mass, charge, segment, ratio, rsquared, num_ms2=None, uuid=None):
         """Init peptide."""
         self.sequence = sequence
         self.mass = mass
@@ -14,9 +14,8 @@ class Peptide():
         self.segment = segment
         self.ratio = ratio
         self.rsquared = rsquared
-
-        if num_ms2:
-            self.num_ms2 = num_ms2
+        self.num_ms2 = num_ms2
+        self.uuid = uuid
 
     @property
     def clean_sequence(self):

@@ -1,15 +1,22 @@
 """Defines a Dataset, which is a collection of Proteins."""
 from copy import deepcopy
 from .protein import Protein
+from .peptide import Peptide
 from .parse_combined import ParseCombined
 import csv
-
+import uuid
 
 class Dataset():
     """Holds a list of proteins and defines methods for their manipulation."""
 
     def __init__(self, proteins=[], species=None, name=None):
         """Initialize with a list of proteins."""
+        self.uuid = uuid.uuid4()
+
+        for p in proteins:
+            if not p.uuid:
+                p.uuid = self.uuid
+
         self.proteins = proteins
         self.species = species
         self.name = name
@@ -20,6 +27,9 @@ class Dataset():
             return
 
         current = self.get(protein.uniprot)
+
+        if not protein.uuid:
+            protein.uuid = self.uuid
 
         # if we already have a protein in the dataset with the same uniprot, then just add them together
         # otherwise add it to the list
@@ -125,14 +135,15 @@ class Dataset():
         return 'Dataset(proteins={})'.format(self.proteins)
 
 
-def make_dataset(combined_dta_path):
+def make_dataset(combined_dta_path, name=None):
     parser = ParseCombined()
     raw = parser.parse_file(str(combined_dta_path))
-    dataset = Dataset()
+    dataset = Dataset(name=name)
+    uuid = dataset.uuid
     proteins = []
     for protein in raw:
         peptides = [make_peptide(peptide) for peptide in protein['peptides']]
-        proteins.append(make_protein(protein, peptides))
+        proteins.append(make_protein(protein, peptides, uuid=uuid))
     dataset.proteins = proteins
     return dataset
 
@@ -149,12 +160,13 @@ def make_peptide(raw_peptide):
     )
 
 
-def make_protein(raw_protein, peptides):
+def make_protein(raw_protein, peptides, uuid=None):
     """Given a list of attributes and appropriate headers, make a Protein."""
     return Protein(
         uniprot=raw_protein['uniprot_id'],
         symbol=raw_protein['symbol'],
         description=raw_protein['description'],
         peptides=peptides,
-        mean=raw_protein['mean_ratio'], median=None, stdev=None
+        mean=raw_protein['mean_ratio'], median=None, stdev=None,
+        uuid=uuid
     )

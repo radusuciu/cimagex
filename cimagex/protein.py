@@ -3,20 +3,33 @@
 from copy import deepcopy
 import statistics
 import math
+import uuid
 
 
 class Protein():
     """A protein is a collectin of peptides."""
 
-    def __init__(self, uniprot, symbol, description, peptides=[], mean=None, median=None, stdev=None):
+    def __init__(self, uniprot, symbol, description, peptides=[], mean=None, median=None, stdev=None, uuid=None):
         """Init protein."""
         self.uniprot = uniprot
         self.symbol = symbol
         self.description = description
-        self.peptides = peptides
         self.mean = mean
         self.median = median
         self.stdev = stdev
+        self.peptides = peptides
+        self.uuid = uuid
+
+    @property
+    def uuid(self):
+        return self._uuid
+
+    @uuid.setter
+    def uuid(self, uuid):
+        for p in self.peptides:
+            p.uuid = uuid
+
+        self._uuid = uuid
 
     def apply_rsquared_cutoff(self, cutoff):
         """Only keep peptides that meet a specific rsquared cutoff."""
@@ -87,7 +100,6 @@ class Protein():
         return new_protein
 
     def __radd__(self, *args, **kwargs):
-        print('radd called')
         return self.__add__(*args, **kwargs)
 
     def __repr__(self):
