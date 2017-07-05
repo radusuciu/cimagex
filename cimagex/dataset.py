@@ -87,18 +87,74 @@ class Dataset():
         """Only keep proteins that have a minimum number of unique peptides."""
         self.proteins = [p for p in self.proteins if p.get_num_unique_peptides() >= cutoff]
 
+    def apply_unique_quantified_filter(self, cutoff):
+        """Only keep proteins that have a minimum number of unique peptides."""
+        self.proteins = [p for p in self.proteins if p.get_num_unique_quantified_peptides() >= cutoff]
+
+    def apply_datasets_quantified_filter(self, cutoff):
+        self.proteins = [p for p in self.proteins if p.get_num_datasets_quantified() >= cutoff]
+
     def apply_whitelist_filter(self, whitelist):
         """Only keep proteins that are in the passed whitelist."""
         self.proteins = [p for p in self.proteins if p.uniprot in whitelist]
+
+    def apply_blacklist_filter(self, blacklist):
+        """Throw away sequences that are in blacklist."""
+        self.proteins = [p for p in self.proteins if p.uniprot not in blacklist]
+
+    def remove(self, el):
+        """Remove a single element by uniprot or by passing the whole Protein."""
+        if type(el) == Protein:
+            self.proteins.remove(el)
+        elif type(el) == str:
+            self.apply_blacklist_filter([el])
+
+    def remove_reverse_matches(self):
+        """Removes sequences Reverse Uniprot sequences found by IP2."""
+        for p in self.proteins:
+            if 'Reverse' in p.uniprot:
+                self.remove(p)
+
+    def remove_half_tryptic(self):
+        """Removes half tryptic peptides."""
+        for p in self.proteins:
+            p.remove_half_tryptic()
+
+    def remove_oxidized_only(self, oxidized_symbol='+'):
+        """Removes sequences that have no non-oxidized variants."""
+        for p in self.proteins:
+            p.remove_oxidized_only(oxidized_symbol)
+
+    def remove_oxidized_proteins(self, oxidized_symbol='+'):
+        for p in self.proteins:
+            if all(oxidized_symbol in x.sequence for x in p.peptides):
+                self.remove(p)
+
+    def remove_oxidized_methionines(self, oxidized_symbol='+'):
+        for p in self.proteins:
+            p.remove_oxidized_methionines(oxidized_symbol)
+
+    def remove_empty(self):
+        """Removes proteins with no peptides."""
+        for p in self.proteins:
+            if not p.peptides:
+                self.remove(p)
 
     def generate_stats(self, ratio_filter=None):
         """Generate stats for each protein in dataset."""
         for protein in self.proteins:
             protein.generate_stats(ratio_filter)
+        return self
+
+    def filter_20s(self, ratio_cutoff=4):
+        """Filter erroneous 20s from data."""
+        for protein in self.proteins:
+            protein.filter_20s(ratio_cutoff)
+        return self
 
     def to_csv(self, filename, headers=None):
         """Output dataset to .csv file."""
-        with open(filename, 'w') as f:
+        with open(str(filename), 'w') as f:
             writer = csv.writer(f, lineterminator='\n')
 
             if not headers:
