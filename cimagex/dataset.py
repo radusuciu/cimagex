@@ -110,10 +110,8 @@ class Dataset():
             self.apply_blacklist_filter([el])
 
     def remove_reverse_matches(self):
-        """Removes sequences Reverse Uniprot sequences found by IP2."""
-        for p in self.proteins:
-            if 'Reverse' in p.uniprot:
-                self.remove(p)
+        """Removes Reverse Uniprot sequences found by IP2."""
+        self.proteins = [p for p in self.proteins if 'Reverse' not in p.uniprot]
 
     def remove_half_tryptic(self):
         """Removes half tryptic peptides."""
@@ -136,9 +134,7 @@ class Dataset():
 
     def remove_empty(self):
         """Removes proteins with no peptides."""
-        for p in self.proteins:
-            if not p.peptides:
-                self.remove(p)
+        self.proteins = [p for p in self.proteins if p.peptides]
 
     def generate_stats(self, ratio_filter=None):
         """Generate stats for each protein in dataset."""
@@ -149,6 +145,7 @@ class Dataset():
     def filter_20s(self, ratio_cutoff=4):
         """Filter erroneous 20s from data."""
         for protein in self.proteins:
+            protein.filter_20s_by_ms2()
             protein.filter_20s(ratio_cutoff)
         return self
 

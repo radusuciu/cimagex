@@ -40,13 +40,11 @@ class Protein():
 
     def remove_half_tryptic(self):
         """Removes half tryptic peptides from protein."""
-        for p in self.peptides:
-            if p.sequence[0] not in ['K','R','-']: # nterminus
-                self.peptides.remove(p)
-                continue
-
-            if p.sequence[-3] not in ['K','R'] and p.sequence[-1] != '-': # cterminus    
-                self.peptides.remove(p)
+        self.peptides = [
+            p for p in self.peptides 
+            if p.sequence[0] in ['K','R','-']
+            and (p.sequence[-3] in ['K','R'] or p.sequence[-1] == '-')
+        ]
 
     def remove_oxidized_only(self, oxidized_symbol='+'):
         """Removes sequences that have no non-oxidized variants."""
@@ -128,6 +126,10 @@ class Protein():
                 for p in self.peptides:
                     if p.ratio == 20:
                         p.ratio = 0
+
+    def filter_20s_by_ms2(self, min_ms2=2):
+        """Only keep 20s with a certain number of ms2s."""
+        self.peptides = [p for p in self.peptides if not(p.ratio == 20 and p.num_ms2 < min_ms2)]
 
     @staticmethod
     def special_mean(ratios):

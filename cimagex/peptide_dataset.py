@@ -12,6 +12,8 @@ from .parse_combined import ParseCombined
 import csv
 import itertools
 import operator
+import uuid
+
 
 
 class Peptide(MudpitPeptide):
@@ -53,7 +55,7 @@ class Peptide(MudpitPeptide):
 class PeptideContainer(MudpitProtein):
     """A grouping of other peptides."""
 
-    def __init__(self, sequence, uniprot, description, peptides=[], mean=None, median=None, stdev=None):
+    def __init__(self, sequence, uniprot, description, peptides=[], mean=None, median=None, stdev=None, uuid=None):
         """Init peptide."""
         self._id = '{}_{}'.format(uniprot, sequence)
         self.uniprot = uniprot
@@ -64,7 +66,20 @@ class PeptideContainer(MudpitProtein):
         self.median = median
         self.stdev = stdev
 
+        self.uuid = uuid
+
         self._clean_id = '{}_{}'.format(uniprot, self.clean_sequence)
+
+    @property
+    def uuid(self):
+        return self._uuid
+
+    @uuid.setter
+    def uuid(self, uuid):
+        for p in self.peptides:
+            p.uuid = uuid
+
+        self._uuid = uuid
 
     @property
     def clean_sequence(self):
@@ -74,14 +89,6 @@ class PeptideContainer(MudpitProtein):
     def get_num_unique_peptides(self):
         """Get number unique peptides by sequence."""
         return len(set([x.clean_sequence for x in self.peptides]))
-
-    def remove_half_tryptic(self):
-        """Removes half tryptic peptides from container."""
-        for p in self.peptides:
-            if p.sequence[0] not in ['K','R','-']: # nterminus
-                self.peptides.remove(p)
-            if  p.sequence[-3] not in ['K','R'] and p.sequence[-1] != '-': # cterminus    
-                self.peptides.remove(p)
 
     def filter_by_ms2(self, threshold=2):
         """Filter out peptides that don't have a certain number of ms2s."""
@@ -127,10 +134,18 @@ class PeptideContainer(MudpitProtein):
 class PeptideDataset():
     """Holds a list of peptides and defines methods for their manipulation."""
 
-    def __init__(self, sequences=[], url=None):
+    def __init__(self, sequences=[], url=None, name=None):
         """Initialize with a list of sequences (peptide containers)."""
+        self.uuid = uuid.uuid4()
+
+        for s in sequences:
+            if not s.uuid:
+                s.uuid = self.uuid
+
         self.sequences = sequences
         self.url = url
+        self.name = name
+
 
     def add(self, sequence):
         """Add a protein to the list."""
@@ -242,6 +257,7 @@ class PeptideDataset():
             # apply to peptides that only have one sequence
             if len(s.peptides) == 1:
                 s.filter_by_ms2()
+                continue
 
         return self
 
@@ -283,16 +299,16 @@ class PeptideDataset():
             s.remove_half_tryptic()
 
     def remove_reverse_matches(self):
-        """Removes sequences Reverse Uniprot sequences found by IP2."""
-        for s in self.sequences:
-            if 'Reverse' in s.uniprot:
-                self.remove(s)
+        """Removes Reverse Uniprot sequences found by IP2."""
+        self.sequences = [s for s in self.sequences if 'Reverse' not in s.uniprot]
+
+    def remove_only_zeros(self):
+        """Remove peptide containers which contain only ratios of zero."""
+        self.sequences = [s for s in self.sequences if any(p.ratio for p in s.peptides)]
 
     def remove_empty(self):
         """Removes empty peptide containers."""
-        for s in self.sequences:
-            if not s.peptides:
-                self.remove(s)
+        self.sequences = [s for s in self.sequences if s.peptides]
 
     def merge_to_clean_sequences(self):
         """Merge peptides with the same base sequence, irrespective of diff mods."""
@@ -308,6 +324,12 @@ class PeptideDataset():
         """Generate stats for each protein in dataset."""
         for sequence in self.sequences:
             sequence.generate_stats(ratio_filter)
+
+    def filter_20s(self, ratio_cutoff=4):
+        """Filter erroneous 20s from data."""
+        for sequence in self.sequences:
+            sequence.filter_20s(ratio_cutoff)
+        return self
 
     def to_csv(self, filename, headers=None):
         """Output dataset to .csv file."""
@@ -349,7 +371,7 @@ class PeptideDataset():
         return 'PeptideDataset(sequences={})'.format(self.sequences)
 
 
-def make_dataset(combined_dta_path, dtaselect_path=None):
+def make_dataset(combined_dta_path, dtaselect_path=None, name=None):
     parser = ParseCombined()
     raw = parser.parse_file(str(combined_dta_path), type='peptide')
     sequences = []
@@ -373,10 +395,15 @@ def make_dataset(combined_dta_path, dtaselect_path=None):
         # separate entities even if they are kept together by cimage
         grouped = itertools.groupby(peptides, operator.attrgetter('uniprot'))
 
-        for uniprot, group in grouped:
-            sequences.append(make_sequence(uniprot, item, list(group)))
+        dataset = PeptideDataset(name=name)
+        uuid = dataset.uuid
 
-    return PeptideDataset(sequences=sequences)
+        for uniprot, group in grouped:
+            sequences.append(make_sequence(uniprot, item, list(group), uuid=uuid))
+
+        dataset.sequences = sequences
+
+    return dataset
 
 
 def make_peptide(raw_peptide):
@@ -392,13 +419,14 @@ def make_peptide(raw_peptide):
     )
 
 
-def make_sequence(uniprot, item, peptides):
+def make_sequence(uniprot, item, peptides, uuid=None):
     return PeptideContainer(
         sequence=item['sequence'],
         uniprot=uniprot,
         description=peptides[0].description,
         peptides=peptides,
-        mean=item['mean_ratio'], median=None, stdev=None
+        mean=item['mean_ratio'], median=None, stdev=None,
+        uuid=uuid
     )
 
 
