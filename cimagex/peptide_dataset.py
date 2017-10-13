@@ -344,22 +344,21 @@ class PeptideDataset():
 
             if not headers:
                 headers = [
-                    'uniprot', 'description', 'sequence', 'mean',
-                    'median', 'stdev', 'n', 'stderr'
+                    'id', 'uniprot', 'description', 'sequence', 'mean_of_medians',
+                    'stdev', 'n'
                 ]
 
             writer.writerow(headers)
 
             for sequence in self.sequences:
                 writer.writerow([
+                    sequence._id,
                     sequence.uniprot,
                     sequence.description,
                     sequence.sequence,
-                    sequence.mean,
-                    sequence.median,
-                    sequence.stdev,
-                    sequence.n,
-                    sequence.stderr
+                    sequence.mean_of_medians,
+                    sequence.stdev_mean_of_medians,
+                    sequence.n
                 ])
 
     def __add__(self, dataset):
