@@ -325,6 +325,12 @@ class PeptideDataset():
         for sequence in self.sequences:
             sequence.generate_stats(ratio_filter)
 
+    def filter_by_stdev(self, stdev_cutoff=0.6, ratio_cutoff=4):
+        """Filter peptides that have high standard deviations."""
+        for sequence in self.sequences:
+            sequence.filter_by_stdev(stdev_cutoff, ratio_cutoff)
+        return self
+
     def filter_20s(self, ratio_cutoff=4):
         """Filter erroneous 20s from data."""
         for sequence in self.sequences:
