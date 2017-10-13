@@ -173,12 +173,12 @@ class Protein():
             return '-'
 
     @staticmethod
-    def special_stdev(ratios):
+    def special_stdev(ratios, default='-'):
         """Return the standard deviation of a set of ratios."""
         try:
             return statistics.stdev(ratios)
         except statistics.StatisticsError:
-            return '-'
+            return default
 
     @staticmethod
     def special_stderr(ratios):
