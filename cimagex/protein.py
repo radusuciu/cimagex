@@ -146,7 +146,7 @@ class Protein():
         # - the set of ratios is not just composed of 0s and 20s
         # - there is only one 20
         # - the lowest non-zero, non-20 value is below a cutoff
-        if set(ratios) != {0, 20} and ratios.count(20) == 1:
+        if not set(ratios).issubset({0, 20}) and ratios.count(20) == 1:
             if not non_zero_or_20 or min(non_zero_or_20) < ratio_cutoff:
                 for p in self.peptides:
                     if p.ratio == 20:
