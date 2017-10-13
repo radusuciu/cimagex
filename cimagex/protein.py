@@ -107,6 +107,31 @@ class Protein():
         self.num_datasets = len(set(p.uuid for p in self.peptides))
         self.num_datasets_quantified = len(set(p.uuid for p in self.peptides if p.ratio > 0))
 
+
+    def filter_by_stdev(self, stdev_cutoff=0.6, ratio_cutoff=4):
+        """Filter ratios based on a standard deviation cutoff."""
+        ratios = [p.ratio for p in self.peptides if p.ratio > 0]
+
+        # no-op if less than two ratios
+        if len(ratios) < 2:
+            return
+
+        stdev = self.special_stdev(ratios, default=None)
+        mean = statistics.mean(ratios)
+        minimum = min(ratios)
+
+        # if stdev is tight enough relative to the mean
+        # or if all the ratios are above a certain threshold
+        # return unchanged
+        # else, set everything but the minimum to zero
+        if (stdev != None and stdev / mean < stdev_cutoff) or minimum > ratio_cutoff:
+            return
+        else:
+            for p in self.peptides:
+                if p.ratio != minimum:
+                    p.ratio = 0
+
+
     def filter_20s(self, ratio_cutoff=4):
         """Filter out erroneous seeming 20s."""
         ratios = [p.ratio for p in self.peptides]
