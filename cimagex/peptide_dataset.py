@@ -362,7 +362,7 @@ class PeptideDataset():
                 ])
 
     def __add__(self, dataset):
-        """Two datasets can be added together by adding all their consituent sequences."""
+        """Two datasets can be added together by adding all their constituent sequences."""
         new_dataset = deepcopy(self)
 
         for sequence in dataset.sequences:

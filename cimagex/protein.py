@@ -95,6 +95,8 @@ class Protein():
 
         replicate_means = [r for r in replicate_means if isinstance(r, numbers.Number)]
 
+        self.replicate_means = replicate_means
+
         self.mean_of_medians = self.special_mean(replicate_means)
 
         self.stdev = self.special_stdev(ratios)
