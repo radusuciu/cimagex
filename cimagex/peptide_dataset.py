@@ -6,6 +6,7 @@ I can't afford to spend the time so.. :/
 
 from copy import deepcopy
 from collections import defaultdict
+from Bio import SeqIO
 from .peptide import Peptide as MudpitPeptide
 from .protein import Protein as MudpitProtein
 from .parse_combined import ParseCombined
@@ -19,16 +20,18 @@ import uuid
 class Peptide(MudpitPeptide):
     """An individual peptide."""
 
-    def __init__(self, sequence, uniprot, description, mass, charge, segment, ratio, rsquared, num_ms2=None):
+    def __init__(self, sequence, uniprot, symbol, description, mass, charge, segment, ratio, rsquared, num_ms2=None, residue=None):
         """Init peptide."""
         self.sequence = sequence
         self.uniprot = uniprot
+        self.symbol = symbol
         self.description = description
         self.mass = mass
         self.charge = charge
         self.segment = segment
         self.ratio = ratio
         self.rsquared = rsquared
+        self.residue = residue
 
         if num_ms2:
             self.num_ms2 = num_ms2
@@ -55,10 +58,11 @@ class Peptide(MudpitPeptide):
 class PeptideContainer(MudpitProtein):
     """A grouping of other peptides."""
 
-    def __init__(self, sequence, uniprot, description, peptides=[], mean=None, median=None, stdev=None, uuid=None):
+    def __init__(self, sequence, uniprot, symbol, description, peptides=[], mean=None, median=None, stdev=None, uuid=None):
         """Init peptide."""
         self._id = '{}_{}'.format(uniprot, sequence)
         self.uniprot = uniprot
+        self.symbol = symbol
         self.description = description
         self.sequence = sequence
         self.peptides = peptides
@@ -337,6 +341,29 @@ class PeptideDataset():
             sequence.filter_20s(ratio_cutoff)
         return self
 
+    def filter_20s_by_ms2(self):
+        """Filter 20s that only have one ms2."""
+        for sequence in self.sequences:
+            sequence.filter_20s_by_ms2()
+
+    def annotate_residues(self):
+        """Annotate residues."""
+        db = list(SeqIO.parse('data/db.txt', 'fasta'))
+        uniprot_db = {item.id.split('|')[1]: item for item in db if 'Reverse' not in item.id}
+
+        delchars = {ord(c): None for c in map(chr, range(256)) if not c.isalpha() and not c == '*'}
+
+        for sequence in self.sequences:
+            protein_sequence = uniprot_db[sequence.uniprot].seq
+
+            for peptide in sequence.peptides:
+                sequence = peptide.sequence.split('.')[1].translate(delchars)
+                position_in_sequence = sequence.index('*')
+                sequence = sequence.replace('*', '')
+
+                sequence_position_in_protein = protein_sequence.find(sequence)
+                peptide.residue = sequence_position_in_protein + position_in_sequence
+
     def to_csv(self, filename, headers=None):
         """Output dataset to .csv file."""
         with open(str(filename), 'w') as f:
@@ -416,6 +443,7 @@ def make_peptide(raw_peptide):
         sequence=raw_peptide['sequence'],
         uniprot=raw_peptide['uniprot_id'],
         description=raw_peptide['description'],
+        symbol=raw_peptide['symbol'],
         mass=float(raw_peptide['mass']),
         charge=int(raw_peptide['charge']),
         segment=int(raw_peptide['segment']),
@@ -429,6 +457,7 @@ def make_sequence(uniprot, item, peptides, uuid=None):
         sequence=item['sequence'],
         uniprot=uniprot,
         description=peptides[0].description,
+        symbol=peptides[0].symbol,
         peptides=peptides,
         mean=item['mean_ratio'], median=None, stdev=None,
         uuid=uuid
