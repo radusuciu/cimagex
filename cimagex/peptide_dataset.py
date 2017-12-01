@@ -391,7 +391,7 @@ class PeptideDataset():
                 writer.writerow([
                     sequence._id,
                     sequence.uniprot,
-                    sequence.residues,
+                    ', '.join(map(str, sequence.residues)),
                     sequence.description,
                     sequence.sequence,
                     sequence.mean_of_medians,
