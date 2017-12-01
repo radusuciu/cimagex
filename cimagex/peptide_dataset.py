@@ -90,6 +90,16 @@ class PeptideContainer(MudpitProtein):
         """Get totally clean peptide sequence."""
         return self.sequence.translate(Peptide.delchars)
 
+    @property
+    def residues(self):
+        """Return list of residues for child peptides."""
+        return list(sorted(set(p.residue for p in self.peptides)))
+
+    @property
+    def residues_pretty(self):
+        """Return list of residues formatted for inclusion in proteomic tables."""
+        return ', '.join(map(lambda x: 'C{}'.format(x), self.residues))
+
     def get_num_unique_peptides(self):
         """Get number unique peptides by sequence."""
         return len(set([x.clean_sequence for x in self.peptides]))
@@ -371,7 +381,7 @@ class PeptideDataset():
 
             if not headers:
                 headers = [
-                    'id', 'uniprot', 'description', 'sequence', 'mean_of_medians',
+                    'id', 'uniprot', 'residues', 'description', 'sequence', 'mean_of_medians',
                     'stdev', 'n'
                 ]
 
@@ -381,6 +391,7 @@ class PeptideDataset():
                 writer.writerow([
                     sequence._id,
                     sequence.uniprot,
+                    sequence.residues,
                     sequence.description,
                     sequence.sequence,
                     sequence.mean_of_medians,
