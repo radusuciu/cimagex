@@ -387,14 +387,17 @@ class PeptideDataset():
 
         delchars = {ord(c): None for c in map(chr, range(256)) if not c.isalpha() and not c == '*'}
 
-        for sequence in self.sequences:
-            protein_sequence = uniprot_db[sequence.uniprot].seq
+        for s in self.sequences:
+            try:
+                protein_sequence = uniprot_db[s.uniprot].seq
+            except KeyError:
+                # didn't find sequence in database so we skip
+                continue
 
-            for peptide in sequence.peptides:
+            for peptide in s.peptides:
                 sequence = peptide.sequence.split('.')[1].translate(delchars)
                 position_in_sequence = sequence.index('*')
                 sequence = sequence.replace('*', '')
-
                 sequence_position_in_protein = protein_sequence.find(sequence)
                 peptide.residue = sequence_position_in_protein + position_in_sequence
 
