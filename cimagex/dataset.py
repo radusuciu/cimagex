@@ -197,12 +197,15 @@ def make_dataset(combined_dta_path, name=None, parse_as_file=True):
         raw = parser.parse_io(combined_dta_path)
 
     dataset = Dataset(name=name)
-    uuid = dataset.uuid
+    _uuid = dataset.uuid
     proteins = []
+
     for protein in raw:
         peptides = [make_peptide(peptide) for peptide in protein['peptides']]
-        proteins.append(make_protein(protein, peptides, uuid=uuid))
+        proteins.append(make_protein(protein, peptides, uuid=_uuid))
+
     dataset.proteins = proteins
+
     return dataset
 
 
