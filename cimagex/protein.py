@@ -68,7 +68,7 @@ class Protein():
         """Get number of unique quantified peptides."""
         return len(set([x.clean_sequence for x in self.peptides if x.ratio > 0]))
 
-    def generate_stats(self, ratio_filter=None, inverse=False):
+    def generate_stats(self, ratio_filter=None, inverse=False, replicate_medians_dict={}):
         """Set mean, median and stdev."""
         raw_ratios = [p.ratio for p in self.peptides]
 
@@ -83,30 +83,32 @@ class Protein():
         self.mean = self.special_mean(ratios)
         self.median = self.special_median(ratios)
 
-        replicate_means = []
+        replicate_medians = []
         grouped = itertools.groupby(self.peptides, operator.attrgetter('uuid'))
 
-        for uuid, group in grouped:
-            peptides = list(group)
-            replicate_means.append(
-                self.special_median([p.ratio for p in peptides if p.ratio > 0])
-            )
+        for uuid, peptides in grouped:
+            median = self.special_median(p.ratio for p in peptides if p.ratio > 0)
+            replicate_medians_dict[uuid] = median
+            replicate_medians.append(median)
 
-        replicate_means = [r for r in replicate_means if isinstance(r, numbers.Number)]
+        self.replicate_medians_dict = replicate_medians_dict
 
-        self.replicate_means = replicate_means
+        # filtering out "-" returned from special median function
+        # at least at time of writing, should probably not return non-number values
+        replicate_medians  = [r for r in replicate_medians if isinstance(r, numbers.Number)]
+        self.replicate_medians = replicate_medians
 
-        self.mean_of_medians = self.special_mean(replicate_means)
+        self.mean_of_medians = self.special_mean(replicate_medians)
 
         self.stdev = self.special_stdev(ratios)
-        self.stdev_mean_of_medians = self.special_stdev(replicate_means)
+        self.stdev_mean_of_medians = self.special_stdev(replicate_medians)
 
         self.stderr = self.special_stderr(ratios)
         self.n = len(ratios)
         self.num_unique_peptides = len(set(p.clean_sequence for p in self.peptides))
         self.num_unique_quantified_peptides = len(set(p.clean_sequence for p in self.peptides if p.ratio > 0))
         self.num_datasets = len(set(p.uuid for p in self.peptides))
-        self.num_datasets_quantified = len(set(p.uuid for p in self.peptides if p.ratio > 0))
+        self.num_datasets_quantified = self.get_num_datasets_quantified()
 
 
     def filter_by_stdev(self, stdev_cutoff=0.6, ratio_cutoff=4):
