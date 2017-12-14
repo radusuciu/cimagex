@@ -106,9 +106,7 @@ class PeptideContainer(MudpitProtein):
 
     def filter_by_ms2(self, threshold=2):
         """Filter out peptides that don't have a certain number of ms2s."""
-        for p in self.peptides:
-            if p.num_ms2 < threshold:
-                self.peptides.remove(p)
+        self.peptides = [p for p in self.peptides if p.num_ms2 >= threshold]
 
     def make_clean(self):
         """Set sequence and id to clean variants."""
