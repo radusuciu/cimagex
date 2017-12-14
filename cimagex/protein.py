@@ -6,7 +6,6 @@ import itertools
 import numbers
 import operator
 import math
-import uuid
 
 
 class Protein():
