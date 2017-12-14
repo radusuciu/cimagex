@@ -5,7 +5,7 @@ I can't afford to spend the time so.. :/
 """
 
 from copy import deepcopy
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from Bio import SeqIO
 from .peptide import Peptide as MudpitPeptide
 from .protein import Protein as MudpitProtein
@@ -196,6 +196,11 @@ class PeptideDataset():
         matches = [s for s in self.sequences if s.sequence == sequence]
         return matches
 
+    def get_unique_uuids(self):
+        """Get set of all unique uuids which contributed to this dataset."""
+        # return(set(p.uuid for p in s.peptides for s in self.sequences))
+        return(set(p.uuid for s in self.sequences for p in s.peptides))
+
     def standard_processing(self):
         """Convenience method for running common processing steps."""
         self.remove_reverse_matches()
@@ -344,7 +349,7 @@ class PeptideDataset():
     def generate_stats(self, ratio_filter=None):
         """Generate stats for each protein in dataset."""
         for sequence in self.sequences:
-            sequence.generate_stats(ratio_filter)
+            sequence.generate_stats(replicate_medians_dict=OrderedDict.fromkeys(self.get_unique_uuids()))
 
     def filter_by_stdev(self, stdev_cutoff=0.6, ratio_cutoff=4):
         """Filter peptides that have high standard deviations."""
