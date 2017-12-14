@@ -188,9 +188,14 @@ class Dataset():
         return 'Dataset(proteins={})'.format(self.proteins)
 
 
-def make_dataset(combined_dta_path, name=None):
-    parser = ParseCombined()
-    raw = parser.parse_file(str(combined_dta_path))
+def make_dataset(combined_dta_path, name=None, parse_as_file=True):
+    parser = ParseCombined(parser_type='protein')
+
+    if parse_as_file:
+        raw = parser.parse_file(str(combined_dta_path))
+    else:
+        raw = parser.parse_io(combined_dta_path)
+
     dataset = Dataset(name=name)
     uuid = dataset.uuid
     proteins = []
