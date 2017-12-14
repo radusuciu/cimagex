@@ -336,7 +336,7 @@ class PeptideDataset():
         """Removes empty peptide containers."""
         self.sequences = [s for s in self.sequences if s.peptides]
 
-    def merged_sequences_to_clean_sequences(self):
+    def merge_to_clean_sequences(self):
         """Merge peptides with the same base sequence, irrespective of diff mods."""
         for s in self.sequences:
             s.make_clean()
