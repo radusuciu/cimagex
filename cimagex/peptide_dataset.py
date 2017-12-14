@@ -336,15 +336,23 @@ class PeptideDataset():
         """Removes empty peptide containers."""
         self.sequences = [s for s in self.sequences if s.peptides]
 
-    def merge_to_clean_sequences(self):
+    def merged_sequences_to_clean_sequences(self):
         """Merge peptides with the same base sequence, irrespective of diff mods."""
-        for _id in self.get_unique_clean_ids():
-            sequences_matching = [s.make_clean() for s in self.sequences if s._clean_id == _id]
-            # merge into first match if we have multiple matches
-            if len(sequences_matching) > 1:
-                sequences_matching[0] = sum(sequences_matching[1:], sequences_matching[0])
-                for s in sequences_matching[1:]:
-                    self.remove(s)
+        for s in self.sequences:
+            s.make_clean()
+
+        sequences = sorted(self.sequences, key=operator.attrgetter('_clean_id'))
+        merged_sequences = []
+
+        for clean_id, g in itertools.groupby(sequences, operator.attrgetter('_clean_id')):
+            grouped = list(g)
+
+            if len(grouped) == 1:
+                merged_sequences.append(grouped[0])
+            else:
+                merged_sequences.append(sum(grouped[1:], grouped[0]))
+
+        self.sequences = merged_sequences
 
     def generate_stats(self, ratio_filter=None):
         """Generate stats for each protein in dataset."""
