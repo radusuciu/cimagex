@@ -114,6 +114,10 @@ class PeptideContainer(MudpitProtein):
         self.sequence = self.clean_sequence
         return self
 
+    def remove_nonlabeled(self, label_symbol='*'):
+        """Remove peptides that have no label."""
+        self.peptides = [p for p in self.peptides if label_symbol in p.sequence]
+
     def strip_diff_mods(self):
         """Remove all diff mods from container and child peptides."""
         self.make_clean()
@@ -291,6 +295,11 @@ class PeptideDataset():
             self.sequences.remove(el)
         elif type(el) == str:
             self.apply_blacklist_filter([el])
+
+    def remove_nonlabeled(self, label_symbol='*'):
+        """Removes peptides that are not labeled at all."""
+        for s in self.sequences:
+            s.remove_nonlabeled(label_symbol)
 
     def remove_oxidized_only(self, oxidized_symbol='+'):
         """Removes sequences that have no non-oxidized variants."""
