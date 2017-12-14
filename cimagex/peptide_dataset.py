@@ -427,9 +427,12 @@ class PeptideDataset():
 
 
 def make_dataset(combined_dta_path, dtaselect_path=None, name=None):
-    parser = ParseCombined()
-    raw = parser.parse_file(str(combined_dta_path), type='peptide')
+    parser = ParseCombined(parser_type='peptide')
+    raw = parser.parse_file(str(combined_dta_path))
+    
     sequences = []
+
+    dataset = PeptideDataset(name=name)
 
     if dtaselect_path:
         ms2_counts = parse_dtaselect(dtaselect_path)
@@ -444,19 +447,15 @@ def make_dataset(combined_dta_path, dtaselect_path=None, name=None):
                 peptide.num_ms2 = ms2_counts.get(peptide.sequence)
 
             peptides.append(peptide)
-
         # grouping by uniprot in case there are sequences that are assigned to multiple
         # uniprot ids. for assembling our dataset, it would be preferrable to treat these as
         # separate entities even if they are kept together by cimage
         grouped = itertools.groupby(peptides, operator.attrgetter('uniprot'))
 
-        dataset = PeptideDataset(name=name)
-        uuid = dataset.uuid
-
         for uniprot, group in grouped:
-            sequences.append(make_sequence(uniprot, item, list(group), uuid=uuid))
+            sequences.append(make_sequence(uniprot, item, list(group), uuid=dataset.uuid))
 
-        dataset.sequences = sequences
+    dataset.sequences = sequences
 
     return dataset
 
