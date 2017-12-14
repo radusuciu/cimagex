@@ -371,7 +371,19 @@ class PeptideDataset():
     def annotate_residues(self):
         """Annotate residues."""
         db = list(SeqIO.parse('data/db.txt', 'fasta'))
-        uniprot_db = {item.id.split('|')[1]: item for item in db if 'Reverse' not in item.id}
+
+        uniprot_db = {}
+
+        for item in db:
+            try:
+                if not 'Reverse_' in item.id:
+                    # Reversed entries can have the same id as the parent entry, and thus would
+                    # lead to overwriting the correct sequence for a given uniprot
+                    # with the reverse sequence
+                    _id = item.id.split('|')[1]
+                    uniprot_db[_id] = item
+            except IndexError:
+                pass
 
         delchars = {ord(c): None for c in map(chr, range(256)) if not c.isalpha() and not c == '*'}
 
