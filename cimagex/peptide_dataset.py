@@ -10,6 +10,7 @@ from Bio import SeqIO
 from .peptide import Peptide as MudpitPeptide
 from .protein import Protein as MudpitProtein
 from .parse_combined import ParseCombined
+import numbers
 import csv
 import itertools
 import operator
