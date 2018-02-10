@@ -347,10 +347,10 @@ class PeptideDataset():
 
         self.sequences = merged_sequences
 
-    def generate_stats(self, ratio_filter=None):
+    def generate_stats(self, ratio_filter=None, inverse=False):
         """Generate stats for each protein in dataset."""
         for sequence in self.sequences:
-            sequence.generate_stats(replicate_medians_dict=OrderedDict.fromkeys(self.get_unique_uuids()))
+            sequence.generate_stats(ratio_filter, inverse, replicate_medians_dict=OrderedDict.fromkeys(self.get_unique_uuids()))
 
     def filter_by_stdev(self, stdev_cutoff=0.6, ratio_cutoff=4):
         """Filter peptides that have high standard deviations."""
