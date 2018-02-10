@@ -397,10 +397,14 @@ class PeptideDataset():
 
             for peptide in s.peptides:
                 sequence = peptide.sequence.split('.')[1].translate(delchars)
-                position_in_sequence = sequence.index('*')
-                sequence = sequence.replace('*', '')
-                sequence_position_in_protein = protein_sequence.find(sequence)
-                peptide.residue = sequence_position_in_protein + position_in_sequence
+
+                try:
+                    position_in_sequence = sequence.index('*')
+                    sequence = sequence.replace('*', '')
+                    sequence_position_in_protein = protein_sequence.find(sequence)
+                    peptide.residue = sequence_position_in_protein + position_in_sequence
+                except ValueError:
+                    peptide.residue = 0
 
     def to_csv(self, filename, headers=None):
         """Output dataset to .csv file."""
