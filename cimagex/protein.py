@@ -1,5 +1,6 @@
 """Defines protein class."""
 
+from .utils import partition
 from copy import deepcopy
 import statistics
 import itertools
@@ -9,7 +10,7 @@ import math
 
 
 class Protein():
-    """A protein is a collectin of peptides."""
+    """A protein is a collection of peptides."""
 
     def __init__(self, uniprot, symbol, description, peptides=[], mean=None, median=None, stdev=None, uuid=None):
         """Init protein."""
@@ -33,17 +34,26 @@ class Protein():
 
         self._uuid = uuid
 
+    def copy_with_new_peptides(self, peptides=[]):
+        """Makes a copy of self, and removes peptides."""
+        me = deepcopy(self)
+        me.peptides = peptides
+        return me
+
     def apply_rsquared_cutoff(self, cutoff):
         """Only keep peptides that meet a specific rsquared cutoff."""
         self.peptides = [peptide for peptide in self.peptides if peptide.rsquared >= cutoff]
 
     def remove_half_tryptic(self):
         """Removes half tryptic peptides from protein."""
-        self.peptides = [
-            p for p in self.peptides 
-            if p.sequence[0] in ['K','R','-']
-            and (p.sequence[-3] in ['K','R'] or p.sequence[-1] == '-')
-        ]
+        def is_not_half_tryptic(p):
+            return (
+                p.sequence[0] in ['K','R','-'] and
+                (p.sequence[-3] in ['K','R'] or p.sequence[-1] == '-')
+            )
+
+        self.peptides, removed = partition(is_not_half_tryptic, self.peptides)
+        return removed
 
     def remove_oxidized_only(self, oxidized_symbol='+'):
         """Removes sequences that have no non-oxidized variants."""
