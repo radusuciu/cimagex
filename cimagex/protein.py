@@ -98,6 +98,10 @@ class Protein():
 
         for uuid, peptides in grouped:
             median = self.special_median(p.ratio for p in peptides if p.ratio > 0)
+
+            if inverse and isinstance(median, numbers.Number) and median > 0:
+                median = 1 / median
+
             replicate_medians_dict[uuid] = median
             replicate_medians.append(median)
 
