@@ -1,5 +1,6 @@
 """Defines a Dataset, which is a collection of Proteins."""
 from copy import deepcopy
+from collections import OrderedDict
 from .protein import Protein
 from .peptide import Peptide
 from .parse_combined import ParseCombined
@@ -68,12 +69,17 @@ class Dataset():
             unique.add(protein.uniprot)
         return unique
 
+    def get_unique_uuids(self):
+        """Get set of all unique uuids which contributed to this dataset."""
+        # return(set(p.uuid for p in s.peptides for s in self.sequences))
+        return(set(p.uuid for s in self.proteins for p in s.peptides))
+
     def filter(self, filter_callback):
         """Given any callback, filter the list of proteins contained in a dataset."""
         self.proteins = filter(filter_callback, self.proteins)
 
     def apply_rsquared_cutoff(self, cutoff):
-        """Filter dataset by ratio cutoff."""
+        """Filter dataset by rsquared cutoff."""
         filtered = []
 
         for protein in self.proteins:
@@ -136,10 +142,10 @@ class Dataset():
         """Removes proteins with no peptides."""
         self.proteins = [p for p in self.proteins if p.peptides]
 
-    def generate_stats(self, ratio_filter=None):
+    def generate_stats(self, ratio_filter=None, inverse=False):
         """Generate stats for each protein in dataset."""
         for protein in self.proteins:
-            protein.generate_stats(ratio_filter)
+            protein.generate_stats(ratio_filter, inverse, replicate_medians_dict=OrderedDict.fromkeys(self.get_unique_uuids()))
         return self
 
     def filter_20s(self, ratio_cutoff=4):
