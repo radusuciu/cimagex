@@ -10,7 +10,6 @@ from Bio import SeqIO
 from .peptide import Peptide as MudpitPeptide
 from .protein import Protein as MudpitProtein
 from .parse_combined import ParseCombined
-from .utils import partition
 import numbers
 import csv
 import itertools
@@ -107,8 +106,7 @@ class PeptideContainer(MudpitProtein):
 
     def remove_nonlabeled(self, label_symbol='*'):
         """Remove peptides that have no label."""
-        self.peptides, removed = partition(lambda p: label_symbol in p.sequence, self.peptides)
-        return removed
+        self.peptides = [p for p in self.peptides if label_symbol in p.sequence]
 
     def strip_diff_mods(self):
         """Remove all diff mods from container and child peptides."""
@@ -154,26 +152,20 @@ class PeptideDataset():
         self.url = url
         self.name = name
 
-        self.removed = []
 
-
-    def add(self, sequence, target=None):
+    def add(self, sequence):
         """Add a protein to the list."""
         if not type(sequence) == PeptideContainer:
             return
-
-        # mainly here to support keeping track of removed entries
-        if not target:
-            target = self.sequences
 
         current = self.get(sequence.sequence, sequence.uniprot)
 
         # if we already have a protein in the dataset with the same uniprot, then just add them together
         # otherwise add it to the list
         if current:
-            target[target.index(current)] = current + sequence
+            self.sequences[self.sequences.index(current)] = current + sequence
         else:
-            target.append(sequence)
+            self.sequences.append(sequence)
 
     def get(self, sequence, uniprot):
         """Get from the dataset by sequence, uniprot pair."""
@@ -311,51 +303,30 @@ class PeptideDataset():
 
     def remove_nonlabeled(self, label_symbol='*'):
         """Removes peptides that are not labeled at all."""
-        removed = []
-
         for s in self.sequences:
-            removed_peptides = s.remove_nonlabeled(label_symbol)
-            if removed_peptides:
-                removed.append(s.copy_with_new_peptides(removed_peptides))
-
-        self.removed += removed
-        return removed
+            s.remove_nonlabeled(label_symbol)
 
     def remove_oxidized_only(self, oxidized_symbol='+'):
         """Removes sequences that have no non-oxidized variants."""
         oxidized_sequences = [s for s in self.sequences if oxidized_symbol in s.sequence]
-        removed = []
 
         for s in oxidized_sequences:
             non_oxidized_variants = self.get(s.clean_sequence, s.uniprot)
             if not non_oxidized_variants:
-                self.removed.append(s)
                 self.remove(s)
-        return
 
     def remove_double_labeled(self, label_symbol='*'):
         """Removes peptides that are doubly labeled."""
-        self.sequences, removed = partition(lambda s: s.sequence.count(label_symbol) == 1, self.sequences)
-        self.removed += removed
-        return removed
+        self.filter(lambda s: s.sequence.count(label_symbol) <= 1)
 
     def remove_half_tryptic(self):
         """Removes half tryptic peptides."""
-        removed = []
-
         for s in self.sequences:
-            removed_peptides = s.remove_half_tryptic()
-            if removed_peptides:
-                removed.append(s.copy_with_new_peptides(removed_peptides))
-
-        self.removed += removed
-        return removed
+            s.remove_half_tryptic()
 
     def remove_reverse_matches(self):
         """Removes Reverse Uniprot sequences found by IP2."""
-        self.sequences, removed = partition(lambda s: 'Reverse' not in s.uniprot, self.sequences)
-        self.removed += removed
-        return removed
+        self.sequences = [s for s in self.sequences if 'Reverse' not in s.uniprot]
 
     def remove_only_zeros(self):
         """Remove peptide containers which contain only ratios of zero."""
