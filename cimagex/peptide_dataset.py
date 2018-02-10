@@ -251,7 +251,7 @@ class PeptideDataset():
         self.sequences = list(filter(filter_callback, self.sequences))
 
     def apply_rsquared_cutoff(self, cutoff):
-        """Filter dataset by ratio cutoff."""
+        """Filter dataset by rsquared cutoff."""
         filtered = []
 
         for sequence in self.sequences:
