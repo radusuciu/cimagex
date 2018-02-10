@@ -75,17 +75,6 @@ class PeptideContainer(MudpitProtein):
         self._clean_id = '{}_{}'.format(uniprot, self.clean_sequence)
 
     @property
-    def uuid(self):
-        return self._uuid
-
-    @uuid.setter
-    def uuid(self, uuid):
-        for p in self.peptides:
-            p.uuid = uuid
-
-        self._uuid = uuid
-
-    @property
     def clean_sequence(self):
         """Get totally clean peptide sequence."""
         return self.sequence.translate(Peptide.delchars)
