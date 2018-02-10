@@ -194,6 +194,13 @@ class PeptideDataset():
         matches = [s for s in self.sequences if s.sequence == sequence]
         return matches
 
+    def get_first_ratio_for_sequence(self, sequence, default=0):
+        """Helper method to get mean of medians for a given sequence. Return default if not found."""
+        try:
+            return self.get_by_sequence(sequence)[0].mean_of_medians
+        except IndexError:
+            return default
+
     def get_unique_uuids(self):
         """Get set of all unique uuids which contributed to this dataset."""
         # return(set(p.uuid for p in s.peptides for s in self.sequences))
