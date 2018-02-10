@@ -113,7 +113,7 @@ class Protein():
         self.stdev = self.special_stdev(ratios)
         self.stdev_mean_of_medians = self.special_stdev(replicate_medians)
 
-        self.stderr = self.special_stderr(ratios)
+        self.stderr = self.special_stderr(ratios, default=0)
         self.n = len(ratios)
         self.num_unique_peptides = len(set(p.clean_sequence for p in self.peptides))
         self.num_unique_quantified_peptides = len(set(p.clean_sequence for p in self.peptides if p.ratio > 0))
@@ -194,12 +194,12 @@ class Protein():
             return default
 
     @staticmethod
-    def special_stderr(ratios):
+    def special_stderr(ratios, default='-'):
         """Return the standard error of a set of ratios."""
         try:
             return statistics.stdev(ratios) / math.sqrt(len(ratios))
         except:
-            return '-'
+            return default
 
     def __add__(self, protein):
         """Add one protein to another by concatenating peptides with the condition that they have the same uniprot."""
