@@ -272,6 +272,9 @@ class PeptideDataset():
     def apply_ratio_cutoff(self, cutoff):
         self.sequences = [s for s in self.sequences if isinstance(s.mean_of_medians, numbers.Number) and s.mean_of_medians >= cutoff]
 
+    def apply_datasets_quantified_filter(self, cutoff):
+        self.sequences = [s for s in self.sequences if s.get_num_datasets_quantified() >= cutoff]
+
     def apply_ms2_filter(self, cutoff=1):
         """Filter dataset to only keep peptides that have at least a certain number of ms2s."""
         for s in self.sequences:
