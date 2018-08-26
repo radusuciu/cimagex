@@ -106,6 +106,13 @@ class Dataset():
         """Only keep proteins that are in the passed whitelist."""
         self.proteins = [p for p in self.proteins if p.uniprot in whitelist]
 
+    def apply_symbol_blacklist_filter(self, whitelist):
+        """Only keep proteins that are in the passed whitelist."""
+        self.proteins = [p for p in self.proteins if p.symbol not in whitelist]
+
+    def apply_keratin_filter(self):
+        self.proteins = [p for p in self.proteins if 'KRT' != p.symbol[:3]]
+
     def apply_blacklist_filter(self, blacklist):
         """Throw away sequences that are in blacklist."""
         self.proteins = [p for p in self.proteins if p.uniprot not in blacklist]
