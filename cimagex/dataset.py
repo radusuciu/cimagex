@@ -10,7 +10,7 @@ import uuid
 class Dataset():
     """Holds a list of proteins and defines methods for their manipulation."""
 
-    def __init__(self, proteins=[], species=None, name=None):
+    def __init__(self, proteins=[], species=None, name=None, inhibitor=None, concentration=None):
         """Initialize with a list of proteins."""
         self.uuid = uuid.uuid4()
 
@@ -21,6 +21,8 @@ class Dataset():
         self.proteins = proteins
         self.species = species
         self.name = name
+        self.inhibitor = inhibitor
+        self.concentration = concentration
 
     def add(self, protein):
         """Add a protein to the list."""
