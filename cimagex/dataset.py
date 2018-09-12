@@ -10,7 +10,7 @@ import uuid
 class Dataset():
     """Holds a list of proteins and defines methods for their manipulation."""
 
-    def __init__(self, proteins=[], species=None, name=None):
+    def __init__(self, proteins=[], species=None, name=None, inhibitor=None, concentration=None):
         """Initialize with a list of proteins."""
         self.uuid = uuid.uuid4()
 
@@ -21,6 +21,8 @@ class Dataset():
         self.proteins = proteins
         self.species = species
         self.name = name
+        self.inhibitor = inhibitor
+        self.concentration = concentration
 
     def add(self, protein):
         """Add a protein to the list."""
@@ -104,6 +106,13 @@ class Dataset():
         """Only keep proteins that are in the passed whitelist."""
         self.proteins = [p for p in self.proteins if p.uniprot in whitelist]
 
+    def apply_symbol_blacklist_filter(self, whitelist):
+        """Only keep proteins that are in the passed whitelist."""
+        self.proteins = [p for p in self.proteins if p.symbol not in whitelist]
+
+    def apply_keratin_filter(self):
+        self.proteins = [p for p in self.proteins if 'KRT' != p.symbol[:3]]
+
     def apply_blacklist_filter(self, blacklist):
         """Throw away sequences that are in blacklist."""
         self.proteins = [p for p in self.proteins if p.uniprot not in blacklist]
@@ -151,8 +160,14 @@ class Dataset():
     def filter_20s(self, ratio_cutoff=4):
         """Filter erroneous 20s from data."""
         for protein in self.proteins:
-            protein.filter_20s_by_ms2()
+            # protein.filter_20s_by_ms2()
             protein.filter_20s(ratio_cutoff)
+        return self
+
+    def filter_by_stdev(self, stdev_cutoff=0.6, ratio_cutoff=4):
+        """Filter peptides that have high standard deviations."""
+        for protein in self.proteins:
+            protein.filter_by_stdev(stdev_cutoff, ratio_cutoff)
         return self
 
     def to_csv(self, filename, headers=None):
