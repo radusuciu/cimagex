@@ -164,6 +164,12 @@ class Dataset():
             protein.filter_20s(ratio_cutoff)
         return self
 
+    def filter_by_stdev(self, stdev_cutoff=0.6, ratio_cutoff=4):
+        """Filter peptides that have high standard deviations."""
+        for protein in self.proteins:
+            protein.filter_by_stdev(stdev_cutoff, ratio_cutoff)
+        return self
+
     def to_csv(self, filename, headers=None):
         """Output dataset to .csv file."""
         with open(str(filename), 'w') as f:
