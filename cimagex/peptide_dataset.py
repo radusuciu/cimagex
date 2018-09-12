@@ -181,6 +181,11 @@ class PeptideDataset():
                 return item
         return None
 
+    def get_ratio_for_id(self, _id, default=0):
+        """Helper method to get median of medians for agiven id. Return default value if not found."""
+        seq = self.get_by_id(_id)
+        return seq.mean_of_medians if seq else default
+
     def get_by_sequence(self, sequence):
         """Get all items that match a sequence."""
         matches = [s for s in self.sequences if s.sequence == sequence]
@@ -274,6 +279,14 @@ class PeptideDataset():
 
     def apply_datasets_quantified_filter(self, cutoff):
         self.sequences = [s for s in self.sequences if s.get_num_datasets_quantified() >= cutoff]
+
+    def apply_ratio_cutoff_with_min_datasets(self, cutoff, min_datasets):
+        self.sequences = [
+            s for s in self.sequences
+            if (not isinstance(s.mean_of_medians, numbers.Number))
+            or (s.mean_of_medians < cutoff)
+            or (s.mean_of_medians >= cutoff and s.get_num_datasets_quantified() >= min_datasets)
+        ]
 
     def apply_ms2_filter(self, cutoff=1):
         """Filter dataset to only keep peptides that have at least a certain number of ms2s."""
