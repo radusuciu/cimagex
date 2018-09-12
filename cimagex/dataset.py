@@ -160,7 +160,7 @@ class Dataset():
     def filter_20s(self, ratio_cutoff=4):
         """Filter erroneous 20s from data."""
         for protein in self.proteins:
-            protein.filter_20s_by_ms2()
+            # protein.filter_20s_by_ms2()
             protein.filter_20s(ratio_cutoff)
         return self
 
