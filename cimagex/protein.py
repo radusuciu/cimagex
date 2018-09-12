@@ -33,6 +33,12 @@ class Protein():
 
         self._uuid = uuid
 
+    def copy_with_new_peptides(self, peptides=[]):
+        """Makes a copy of self, and removes peptides."""
+        me = deepcopy(self)
+        me.peptides = peptides
+        return me
+
     def apply_rsquared_cutoff(self, cutoff):
         """Only keep peptides that meet a specific rsquared cutoff."""
         self.peptides = [peptide for peptide in self.peptides if peptide.rsquared >= cutoff]
@@ -64,6 +70,10 @@ class Protein():
         """Get number unique peptides by sequence."""
         return len(set([x.clean_sequence for x in self.peptides]))
 
+    def get_num_quantified_peptides(self):
+        """Get number of quantified peptides."""
+        return len([x.clean_sequence for x in self.peptides if x.ratio > 0])
+
     def get_num_unique_quantified_peptides(self):
         """Get number of unique quantified peptides."""
         return len(set([x.clean_sequence for x in self.peptides if x.ratio > 0]))
@@ -79,6 +89,8 @@ class Protein():
 
         if inverse:
             ratios = [1/x for x in ratios if x > 0]
+
+        self.ratios = ratios
 
         self.mean = self.special_mean(ratios)
         self.median = self.special_median(ratios)
