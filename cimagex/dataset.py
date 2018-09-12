@@ -95,6 +95,11 @@ class Dataset():
         """Only keep proteins that have a minimum number of unique peptides."""
         self.proteins = [p for p in self.proteins if p.get_num_unique_peptides() >= cutoff]
 
+
+    def apply_quantified_filter(self, cutoff):
+        """Only keep proteins that have a minimum number of quantified peptides."""
+        self.proteins = [p for p in self.proteins if p.get_num_quantified_peptides() >= cutoff]
+
     def apply_unique_quantified_filter(self, cutoff):
         """Only keep proteins that have a minimum number of unique peptides."""
         self.proteins = [p for p in self.proteins if p.get_num_unique_quantified_peptides() >= cutoff]
