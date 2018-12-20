@@ -310,6 +310,10 @@ class PeptideDataset():
         """Throw away sequences that are in blacklist."""
         self.sequences = [s for s in self.sequences if s.sequence not in blacklist]
 
+    def apply_id_blacklist_filter(self, blacklist):
+        """Throw away ids in blacklist."""
+        self.sequences = [s for s in self.sequences if s._id not in blacklist]
+
     def remove(self, el):
         """Remove a single element by sequence or by passing the whole PeptideContainer."""
         if type(el) == PeptideContainer:
