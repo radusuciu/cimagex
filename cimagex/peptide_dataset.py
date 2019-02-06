@@ -374,6 +374,13 @@ class PeptideDataset():
 
         self.sequences = merged_sequences
 
+    def set_max_ratio(self, max_ratio):
+        """Sets a maximum ratio for all peptides."""
+        for sequence in self.sequences:
+            for peptide in sequence.peptides:
+                if peptide.ratio > max_ratio:
+                    peptide.ratio = max_ratio
+
     def generate_stats(self, ratio_filter=None, inverse=False):
         """Generate stats for each protein in dataset."""
         for sequence in self.sequences:
