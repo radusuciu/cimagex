@@ -1,6 +1,7 @@
 """Defines protein class."""
 
 from copy import deepcopy
+from .utils import get_modified_z_scores, get_iqr_bounds
 import statistics
 import itertools
 import numbers
@@ -100,6 +101,7 @@ class Protein():
 
         for uuid, peptides in grouped:
             median = self.special_median(p.ratio for p in peptides if p.ratio > 0)
+            # median = self.special_median(min(p.ratio, 10) for p in peptides if p.ratio > 0)
 
             if inverse and isinstance(median, numbers.Number) and median > 0:
                 median = 1 / median
@@ -115,6 +117,7 @@ class Protein():
         self.replicate_medians = replicate_medians
 
         self.mean_of_medians = self.special_mean(replicate_medians)
+        self.median_of_medians = self.special_median(replicate_medians)
 
         self.stdev = self.special_stdev(ratios)
         self.stdev_mean_of_medians = self.special_stdev(replicate_medians)
@@ -150,13 +153,43 @@ class Protein():
                 if p.ratio != minimum:
                     p.ratio = 0
 
+    def filter_by_mod_z(self, z_cutoff=3, ratio_cutoff=4):
+        """Filter outliers by calculating modified z-score."""
+        all_ratios = [p.ratio for p in self.peptides]
+        non_zero_ratios = [r for r in all_ratios if r > 0]
+
+        # no-op if less than two ratios or if all non-zero ratios are above cutoff
+        if len(non_zero_ratios) < 3 or min(non_zero_ratios) > ratio_cutoff:
+            return
+
+        mod_z_scores = get_modified_z_scores(all_ratios)
+
+        for z_score, p in zip(mod_z_scores, self.peptides):
+            if z_score > z_cutoff:
+                p.ratio = 0
+
+
+    def filter_by_iqr(self, ratio_cutoff=4):
+        """Filter outliers outside of IQR."""
+        ratios = [p.ratio for p in self.peptides if p.ratio != 0]
+
+        if len(ratios) < 2 or min(ratios) > ratio_cutoff:
+            return
+
+        lower, upper = get_iqr_bounds(ratios)
+
+        for p in self.peptides:
+            ratio = p.ratio
+            if ratio != 0 and (ratio < lower or ratio > upper):
+                p.ratio = 0
+
 
     def filter_20s(self, ratio_cutoff=4):
         """Filter out erroneous seeming 20s."""
         ratios = [p.ratio for p in self.peptides]
 
         if 20 not in ratios:
-            return ratios
+            return
 
         non_20s = [x for x in ratios if x != 20]
         non_zero_or_20 = [x for x in non_20s if x > 0]
@@ -170,6 +203,25 @@ class Protein():
                 for p in self.peptides:
                     if p.ratio == 20:
                         p.ratio = 0
+
+    def filter_20s_by_stdev(self, stdev_cutoff=0.6, ratio_cutoff=4):
+        """Filter out 20s from sets of ratios with high standard deviation."""
+        ratios = [p.ratio for p in self.peptides if p.ratio != 0]
+        non_20s = [x for x in ratios if x != 20]
+
+        # require that there are at least two ratios
+        # that there is a 20 in the set of ratios
+        # and that the minimum ratio is below the ratio_cutoff
+        # otherwise do nothing
+        if len(ratios) < 2 or 20 not in ratios or min(ratios) > 4:
+            return
+
+        above_threshold = statistics.stdev(ratios) / statistics.mean(ratios) > stdev_cutoff
+
+        if above_threshold:
+            for p in self.peptides:
+                if p.ratio == 20:
+                    p.ratio = 0
 
     def filter_20s_by_ms2(self, min_ms2=2):
         """Only keep 20s with a certain number of ms2s."""

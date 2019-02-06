@@ -392,10 +392,26 @@ class PeptideDataset():
             sequence.filter_by_stdev(stdev_cutoff, ratio_cutoff)
         return self
 
+    def filter_by_mod_z(self, z_cutoff=3, ratio_cutoff=4):
+        for sequence in self.sequences:
+            sequence.filter_by_mod_z(z_cutoff, ratio_cutoff)
+        return self
+
+    def filter_by_iqr(self, ratio_cutoff=4):
+        for sequence in self.sequences:
+            sequence.filter_by_iqr(ratio_cutoff)
+        return self
+
     def filter_20s(self, ratio_cutoff=4):
         """Filter erroneous 20s from data."""
         for sequence in self.sequences:
             sequence.filter_20s(ratio_cutoff)
+        return self
+
+    def filter_20s_by_stdev(self, stdev_cutoff=0.6, ratio_cutoff=4):
+        """Remove 20s from sets of ratios with high standard deviation."""
+        for sequence in self.sequences:
+            sequence.filter_20s_by_stdev(stdev_cutoff, ratio_cutoff)
         return self
 
     def filter_20s_by_ms2(self):
