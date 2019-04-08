@@ -314,6 +314,21 @@ class PeptideDataset():
         """Throw away ids in blacklist."""
         self.sequences = [s for s in self.sequences if s._id not in blacklist]
 
+    def apply_max_ratio_blacklist(self, blacklist, max_ratio=20):
+        """Remove 20 ratios for items in blacklist."""
+        sequences = filter(None, (self.get_by_id(i) for i in blacklist))
+
+        for s in sequences:
+            s.peptides = [p for p in s.peptides if p.ratio != max_ratio]
+        
+    def remove_highest_value(self, blacklist):
+        """Removes highest ratio from given list of ids."""
+        sequences = filter(None, (self.get_by_id(i) for i in blacklist))
+
+        for s in sequences:
+            max_ratio = max(p.ratio for p in s.peptides)
+            s.peptides = [p for p in s.peptides if p.ratio != max_ratio]
+
     def remove(self, el):
         """Remove a single element by sequence or by passing the whole PeptideContainer."""
         if type(el) == PeptideContainer:
